@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CapEye v10 — Alerts</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="firebase-config.js"></script><script src="ac-data.js"></script>
+<style>
+:root{--red:#C8102E;--navy:#003DA5;--ink:#111827;--ink2:#374151;--ink3:#6B7280;--bg:#F7F8FA;--border:#E5E7EB;--font:'IBM Plex Sans',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100vh;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--ink)}
+.nav{position:fixed;top:0;left:0;right:0;height:54px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+.nav-brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+.nav-mark{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:2px;text-transform:uppercase}
+.nav-name{font-size:14px;font-weight:700;color:var(--ink)}
+.nav-div{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.nav-links{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav-link{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;white-space:nowrap;transition:all .15s}
+.nav-link:hover{background:var(--bg);color:var(--ink)}
+.nav-link.active{background:var(--red);color:#fff}
+.nav-link i{font-size:11px}
+.nav-right{margin-left:auto;flex-shrink:0}
+.nav-user{font-size:12px;font-weight:600;color:var(--ink3);background:var(--bg);padding:5px 10px;border-radius:20px;border:1px solid var(--border)}
+.shell{margin-top:54px;height:calc(100vh - 54px);overflow-y:auto;padding:20px}
+.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:#fff;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.tab-btn.active,.tab-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.tab-count{background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700}
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.alert-card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .15s}
+.alert-card:hover{border-color:var(--red);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.alert-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.alert-content{flex:1}
+.alert-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.alert-desc{font-size:12px;color:var(--ink3);line-height:1.4}
+.alert-meta{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap}
+.alert-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase}
+</style>
+</head><body>
+<nav class="nav">
+  <a class="nav-brand" href="index.html"><span class="nav-mark">CE</span><span class="nav-name">CapEye</span></a>
+  <div class="nav-div"></div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html"><i class="fas fa-gauge-high"></i> Dashboard</a>
+    <a class="nav-link" href="workflow.html"><i class="fas fa-arrows-rotate"></i> Workflow</a>
+    <a class="nav-link" href="inventory.html"><i class="fas fa-car"></i> Inventory</a>
+    <a class="nav-link active" href="alerts.html"><i class="fas fa-bell"></i> Alerts</a>
+    <a class="nav-link" href="analytics.html"><i class="fas fa-chart-bar"></i> Analytics</a>
+    <a class="nav-link" href="keys.html"><i class="fas fa-key"></i> Keys</a>
+    <a class="nav-link" href="auction.html"><i class="fas fa-gavel"></i> Auction</a>
+    <a class="nav-link" href="accessories.html"><i class="fas fa-wrench"></i> Accessories</a>
+    <a class="nav-link" href="aftersales.html"><i class="fas fa-headset"></i> Aftersales</a>
+    <a class="nav-link" href="audit.html"><i class="fas fa-list-check"></i> Audit</a>
+    <a class="nav-link" href="team.html"><i class="fas fa-users"></i> Team</a>
+    <a class="nav-link" href="admin.html"><i class="fas fa-cog"></i> Admin</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user">Keith Hardy</span></div>
+</nav>
+<div class="shell">
+  <div class="tabs" id="tabs"></div>
+  <div class="alert-list" id="alert-list"></div>
+</div>
+<script src="firebase-init.js"></script>
+<script>
+document.getElementById('nav-user').textContent = getCurrentUser().name;
+
+const ALERT_TYPES = [
+  {id:'all',label:'All',color:'#64748b',icon:'fas fa-bell'},
+  {id:'overdue',label:'Overdue',color:'#ef4444',icon:'fas fa-clock'},
+  {id:'mot',label:'MOT',color:'#f59e0b',icon:'fas fa-calendar-xmark'},
+  {id:'no-price',label:'No Price',color:'#f97316',icon:'fas fa-tag'},
+  {id:'not-advertised',label:'Not Advertised',color:'#8b5cf6',icon:'fas fa-ad'},
+  {id:'urgent',label:'Urgent',color:'#C8102E',icon:'fas fa-fire'},
+  {id:'off-site',label:'Off-Site',color:'#3b82f6',icon:'fas fa-truck'},
+  {id:'activity',label:'Today Activity',color:'#10b981',icon:'fas fa-check'},
+];
+
+let allAlerts = [];
+
+function buildAlerts() {
+  allAlerts = [];
+  AC_VEHICLES.forEach(v => {
+    const days = getDaysInStage(v.stageStarted);
+    if (isOverdue(v)) allAlerts.push({type:'overdue',reg:v.registration,title:`${v.registration} — Overdue in ${v.workflowStage}`,desc:`${days} days in stage. Auto-escalated to Keith Hardy.`,color:'#ef4444',icon:'fas fa-clock',link:`vehicle-overview.html?reg=${v.registration}`});
+    if (v.urgent) allAlerts.push({type:'urgent',reg:v.registration,title:`${v.registration} — URGENT`,desc:`${v.make} ${v.model} flagged as urgent`,color:'#C8102E',icon:'fas fa-fire',link:`vehicle-overview.html?reg=${v.registration}`});
+    const mot = getMOTDaysLeft(v.mot);
+    if (mot <= 180 && mot > 0 && v.status !== 'Sold') allAlerts.push({type:'mot',reg:v.registration,title:`${v.registration} — MOT expires in ${mot} days`,desc:`${v.make} ${v.model} · MOT: ${v.mot}. Sorted by soonest date.`,color:mot<=60?'#ef4444':'#f59e0b',icon:'fas fa-calendar-xmark',link:`vehicle-overview.html?reg=${v.registration}`});
+    if ((!v.price||v.price===0) && v.status==='In Stock') allAlerts.push({type:'no-price',reg:v.registration,title:`${v.registration} — No Price Set`,desc:`${v.make} ${v.model} is In Stock with no retail price.`,color:'#f97316',icon:'fas fa-tag',link:`inventory.html`});
+    if (v.workflowStage==='Ready for Sale' && !v.advertised) allAlerts.push({type:'not-advertised',reg:v.registration,title:`${v.registration} — Ready but Not Advertised`,desc:`${v.make} ${v.model} is Ready for Sale but not yet live online.`,color:'#8b5cf6',icon:'fas fa-ad',link:`workflow.html`});
+    if (v.status==='Off-site') allAlerts.push({type:'off-site',reg:v.registration,title:`${v.registration} — Off-site`,desc:`${v.make} ${v.model} is currently off-site. Days away: ${days}.`,color:'#3b82f6',icon:'fas fa-truck',link:`vehicle-overview.html?reg=${v.registration}`});
+  });
+
+  // MOT sorted by soonest
+  const motAlerts = allAlerts.filter(a=>a.type==='mot');
+  motAlerts.sort((a,b)=>getMOTDaysLeft(AC_VEHICLES.find(v=>v.registration===a.reg)?.mot||'') - getMOTDaysLeft(AC_VEHICLES.find(v=>v.registration===b.reg)?.mot||''));
+
+  renderTabs();
+  renderAlerts('all');
+}
+
+let activeType = 'all';
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = ALERT_TYPES.map(t => {
+    const count = t.id==='all' ? allAlerts.length : allAlerts.filter(a=>a.type===t.id).length;
+    return `<button class="tab-btn${activeType===t.id?' active':''}" onclick="renderAlerts('${t.id}')" style="${activeType===t.id?'background:'+t.color+';border-color:'+t.color:''}">
+      <i class="${t.icon}"></i>${t.label}<span class="tab-count">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderAlerts(type) {
+  activeType = type;
+  renderTabs();
+  const filtered = type==='all' ? allAlerts : allAlerts.filter(a=>a.type===type);
+  const el = document.getElementById('alert-list');
+  if (!filtered.length) { el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink3)"><i class="fas fa-check-circle" style="font-size:32px;color:#10b981;margin-bottom:8px;display:block"></i>No ${type==='all'?'':type} alerts</div>`; return; }
+  el.innerHTML = filtered.map(a=>`
+    <div class="alert-card" onclick="location.href='${a.link||'#'}'">
+      <div class="alert-icon" style="background:${a.color}20"><i class="${a.icon}" style="color:${a.color}"></i></div>
+      <div class="alert-content">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+        <div class="alert-meta"><span class="alert-tag" style="background:${a.color}20;color:${a.color}">${a.type.replace('-',' ').toUpperCase()}</span></div>
+      </div>
+      <i class="fas fa-chevron-right" style="color:var(--ink3);margin-top:2px;flex-shrink:0"></i>
+    </div>`).join('');
+}
+
+buildAlerts();
+</script>
+</body></html>

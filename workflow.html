@@ -1,0 +1,530 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CapEye v10 — Workflow</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script><script src="ac-data.js"></script>
+<style>
+:root{--red:#C8102E;--navy:#003DA5;--ink:#111827;--ink2:#374151;--ink3:#6B7280;--bg:#F7F8FA;--white:#fff;--border:#E5E7EB;--font:'IBM Plex Sans',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100vh;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--ink)}
+.nav{position:fixed;top:0;left:0;right:0;height:54px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+.nav-brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+.nav-mark{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:2px;text-transform:uppercase}
+.nav-name{font-size:14px;font-weight:700;color:var(--ink)}
+.nav-div{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.nav-links{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--ink3);text-decoration:none;white-space:nowrap;transition:all .15s}
+.nav-link:hover{background:var(--bg);color:var(--ink)}
+.nav-link.active{background:var(--red);color:#fff}
+.nav-link i{font-size:11px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-user{font-size:12px;font-weight:600;color:var(--ink3);background:var(--bg);padding:5px 10px;border-radius:20px;border:1px solid var(--border)}
+.shell{margin-top:54px;height:calc(100vh - 54px);overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+.toolbar{padding:12px 20px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink3)}
+.tb-select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:#fff;color:var(--ink);cursor:pointer}
+.tb-btn{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;font-family:var(--font);border:none;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#a50025}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{opacity:.9}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink3)}.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+.btn-amber{background:#f59e0b;color:#fff}
+.wf-board{overflow-x:auto;overflow-y:hidden;height:100%;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.wf-board::-webkit-scrollbar{height:6px}
+.wf-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.stage-col{min-width:200px;max-width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.stage-hdr{padding:8px 10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+.stage-hdr-name{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.5px}
+.stage-count{background:rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px}
+.stage-optional{font-size:9px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px;text-transform:uppercase}
+.stage-cards{min-height:60px;border-radius:8px;display:flex;flex-direction:column;gap:6px}
+.veh-card{background:#fff;border-radius:8px;border:1px solid var(--border);padding:10px;cursor:pointer;transition:all .15s;position:relative}
+.veh-card:hover{border-color:var(--red);box-shadow:0 2px 8px rgba(0,0,0,.08);transform:translateY(-1px)}
+.veh-card.urgent{border-left:3px solid var(--red)}
+.veh-card.overdue{border-left:3px solid #f59e0b}
+.veh-card.blocked{opacity:.6}
+.vc-reg{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--ink)}
+.vc-model{font-size:11px;color:var(--ink3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vc-meta{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap}
+.vc-days{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.days-ok{background:#d1fae5;color:#065f46}
+.days-warn{background:#fef3c7;color:#92400e}
+.days-over{background:#fee2e2;color:#991b1b}
+.vc-tag{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;text-transform:uppercase}
+.tag-urgent{background:#fee2e2;color:#991b1b}
+.tag-blocked{background:#e2e8f0;color:#475569}
+.tag-optional{background:#ede9fe;color:#6d28d9}
+.vc-price{font-size:10px;color:var(--ink3);margin-top:4px}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hdr{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:15px;font-weight:700;color:var(--ink)}
+.modal-close{background:none;border:none;font-size:18px;color:var(--ink3);cursor:pointer;padding:4px;border-radius:4px}
+.modal-close:hover{color:var(--red)}
+.modal-body{padding:20px}
+.form-row{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink3);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--ink)}
+.form-input:focus{outline:none;border-color:var(--navy)}
+.form-textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--ink);resize:vertical;min-height:70px}
+.form-textarea:focus{outline:none;border-color:var(--navy)}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff}
+/* CHECKLIST */
+.checklist-section{margin-bottom:14px}
+.checklist-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.checklist-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bg)}
+.checklist-item:last-child{border-bottom:none}
+.ci-label{font-size:12px;color:var(--ink2);flex:1}
+.ci-btns{display:flex;gap:4px}
+.ci-btn{padding:3px 8px;border-radius:4px;border:1px solid var(--border);font-size:10px;font-weight:700;cursor:pointer;transition:all .1s;background:#fff;color:var(--ink3)}
+.ci-btn.green.active{background:#d1fae5;border-color:#10b981;color:#065f46}
+.ci-btn.amber.active{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.ci-btn.red.active{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+/* ACTION BTNS */
+.action-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px}
+.action-btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;font-family:var(--font);border:none;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="index.html"><span class="nav-mark">CE</span><span class="nav-name">CapEye</span></a>
+  <div class="nav-div"></div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html"><i class="fas fa-gauge-high"></i> Dashboard</a>
+    <a class="nav-link active" href="workflow.html"><i class="fas fa-arrows-rotate"></i> Workflow</a>
+    <a class="nav-link" href="inventory.html"><i class="fas fa-car"></i> Inventory</a>
+    <a class="nav-link" href="alerts.html"><i class="fas fa-bell"></i> Alerts</a>
+    <a class="nav-link" href="analytics.html"><i class="fas fa-chart-bar"></i> Analytics</a>
+    <a class="nav-link" href="keys.html"><i class="fas fa-key"></i> Keys</a>
+    <a class="nav-link" href="auction.html"><i class="fas fa-gavel"></i> Auction</a>
+    <a class="nav-link" href="accessories.html"><i class="fas fa-wrench"></i> Accessories</a>
+    <a class="nav-link" href="aftersales.html"><i class="fas fa-headset"></i> Aftersales</a>
+    <a class="nav-link" href="audit.html"><i class="fas fa-list-check"></i> Audit</a>
+    <a class="nav-link" href="team.html"><i class="fas fa-users"></i> Team</a>
+    <a class="nav-link" href="admin.html"><i class="fas fa-cog"></i> Admin</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user">Keith Hardy</span></div>
+</nav>
+
+<div class="shell">
+  <div class="toolbar">
+    <span class="tb-label">Filter:</span>
+    <select class="tb-select" id="filter-stage" onchange="renderBoard()">
+      <option value="">All Stages</option>
+    </select>
+    <select class="tb-select" id="filter-dept" onchange="renderBoard()">
+      <option value="">All Departments</option>
+    </select>
+    <button class="tb-btn btn-red" onclick="openMoveModal(null)"><i class="fas fa-arrow-right"></i> Move Vehicle</button>
+    <button class="tb-btn btn-amber" onclick="showUrgentOnly()"><i class="fas fa-fire"></i> Urgent Only</button>
+    <button class="tb-btn btn-ghost" onclick="renderBoard()"><i class="fas fa-refresh"></i> Reset</button>
+  </div>
+  <div class="wf-board" id="wf-board"></div>
+</div>
+
+<!-- Move/Action Modal -->
+<div class="modal-bg" id="move-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-title">Vehicle Action</div>
+      <button class="modal-close" onclick="closeModal('move-modal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Stage Work Modal (Intake, Mechanical, etc.) -->
+<div class="modal-bg" id="stage-modal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="stage-modal-title">Stage Checklist</div>
+      <button class="modal-close" onclick="closeModal('stage-modal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="stage-modal-body"></div>
+    <div class="modal-footer">
+      <button class="tb-btn btn-ghost" onclick="closeModal('stage-modal')">Cancel</button>
+      <button class="tb-btn btn-red" id="stage-complete-btn">Mark Complete & Handover</button>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-init.js"></script>
+<script>
+let vehicles = JSON.parse(JSON.stringify(AC_VEHICLES));
+let selectedVehicle = null;
+let urgentFilter = false;
+
+// Populate filters
+const stageSelect = document.getElementById('filter-stage');
+AC_WORKFLOW_STAGES.forEach(s => {
+  const o = document.createElement('option');
+  o.value = s.name; o.textContent = s.name;
+  stageSelect.appendChild(o);
+});
+const deptSelect = document.getElementById('filter-dept');
+AC_DEPARTMENTS.forEach(d => {
+  const o = document.createElement('option');
+  o.value = d.name; o.textContent = d.name;
+  deptSelect.appendChild(o);
+});
+
+function renderBoard() {
+  urgentFilter = false;
+  const filterStage = document.getElementById('filter-stage').value;
+  const filterDept  = document.getElementById('filter-dept').value;
+  const board = document.getElementById('wf-board');
+  const stagesToShow = filterStage
+    ? AC_WORKFLOW_STAGES.filter(s=>s.name===filterStage)
+    : AC_WORKFLOW_STAGES;
+
+  board.innerHTML = stagesToShow.map(stage => {
+    let vehs = vehicles.filter(v => v.workflowStage === stage.name);
+    if (urgentFilter) vehs = vehs.filter(v=>v.urgent);
+    if (filterDept && stage.dept !== filterDept) return '';
+
+    const cards = vehs.map(v => {
+      const days = getDaysInStage(v.stageStarted);
+      const cls = days<=1?'days-ok':days<=3?'days-warn':'days-over';
+      const urgentCls = v.urgent ? 'urgent' : isOverdue(v) ? 'overdue' : '';
+      const blockedCls = v.blocked ? 'blocked' : '';
+      return `<div class="veh-card ${urgentCls} ${blockedCls}" onclick="openStageModal('${v.registration}','${stage.name}')">
+        <div class="vc-reg">${v.registration}</div>
+        <div class="vc-model">${v.make} ${v.model}</div>
+        <div class="vc-meta">
+          <span class="vc-days ${cls}">${days}d</span>
+          ${v.urgent?'<span class="vc-tag tag-urgent">URGENT</span>':''}
+          ${v.blocked?'<span class="vc-tag tag-blocked">BLOCKED</span>':''}
+          ${stage.optional?'<span class="vc-tag tag-optional">OPTIONAL</span>':''}
+        </div>
+        <div class="vc-price">${v.price?'£'+v.price.toLocaleString():''} · ${v.mileage} mi</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="stage-col">
+      <div class="stage-hdr" style="background:${stage.color}">
+        <span class="stage-hdr-name">${stage.name}${stage.optional?' <span class="stage-optional">opt</span>':''}</span>
+        <span class="stage-count">${vehs.length}</span>
+      </div>
+      <div class="stage-cards">${cards || '<div style="color:var(--ink3);font-size:11px;padding:8px;text-align:center">Empty</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function showUrgentOnly() {
+  urgentFilter = true;
+  const board = document.getElementById('wf-board');
+  const urgent = vehicles.filter(v=>v.urgent);
+  if (!urgent.length) { showToast('No urgent vehicles flagged','info'); return; }
+  board.innerHTML = urgent.map(v => {
+    const stage = AC_WORKFLOW_STAGES.find(s=>s.name===v.workflowStage);
+    const days = getDaysInStage(v.stageStarted);
+    return `<div class="stage-col">
+      <div class="stage-hdr" style="background:var(--red)">
+        <span class="stage-hdr-name">URGENT — ${v.workflowStage}</span>
+      </div>
+      <div class="stage-cards">
+        <div class="veh-card urgent" onclick="openStageModal('${v.registration}','${v.workflowStage}')">
+          <div class="vc-reg">${v.registration}</div>
+          <div class="vc-model">${v.make} ${v.model}</div>
+          <div class="vc-meta"><span class="vc-days days-over">${days}d</span><span class="vc-tag tag-urgent">URGENT</span></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openStageModal(reg, stageName) {
+  const v = vehicles.find(x=>x.registration===reg);
+  if (!v) return;
+  selectedVehicle = v;
+  const stage = AC_WORKFLOW_STAGES.find(s=>s.name===stageName);
+  document.getElementById('stage-modal-title').textContent = `${reg} — ${stageName}`;
+
+  let body = `
+    <div class="action-row">
+      <button class="action-btn" style="background:var(--green);color:#fff" onclick="moveVehicle('${reg}','next')"><i class="fas fa-arrow-right"></i> Move to Next Stage</button>
+      <button class="action-btn btn-ghost" onclick="openMoveModal('${reg}')"><i class="fas fa-arrows-alt"></i> Move to Specific Stage</button>
+      <button class="action-btn" style="background:#f59e0b;color:#fff" onclick="toggleUrgent('${reg}')"><i class="fas fa-fire"></i> ${v.urgent?'Remove Urgent':'Mark Urgent'}</button>
+      <button class="action-btn btn-ghost" onclick="openSendBackModal('${reg}')"><i class="fas fa-undo"></i> Send Back</button>
+      <button class="action-btn btn-ghost" onclick="openSkipModal('${reg}')"><i class="fas fa-forward"></i> Skip Stage</button>
+      <button class="action-btn" style="background:var(--navy);color:#fff" onclick="location.href='vehicle-overview.html?reg=${reg}'"><i class="fas fa-eye"></i> Full History</button>
+    </div>`;
+
+  // Stage-specific forms
+  if (stageName === 'Intake') body += buildIntakeForm(v);
+  else if (stageName === 'Bodywork') body += buildBodyworkForm(v);
+  else if (stageName === 'Dent Repair') body += buildDentForm(v);
+  else if (stageName === 'Mechanical') body += buildMechanicalForm(v);
+  else if (stageName === 'External Work') body += buildExternalWorkForm(v);
+  else if (stageName === 'Valeting') body += buildValetingForm(v);
+  else if (stageName === 'Advertising') body += buildAdvertisingForm(v);
+  else if (stageName === 'Legal & Docs') body += buildLegalDocsForm(v);
+  else if (stageName === 'Test Drive') body += buildTestDriveForm(v);
+
+  document.getElementById('stage-modal-body').innerHTML = body;
+  document.getElementById('stage-complete-btn').onclick = () => completeStage(reg, stageName);
+  document.getElementById('stage-modal').classList.add('open');
+}
+
+function buildIntakeForm(v) {
+  return `<div class="form-row"><label class="form-label">Date In</label><input type="date" class="form-input" id="f-date-in" value="${new Date().toISOString().split('T')[0]}"></div>
+  <div class="form-row"><label class="form-label">Vehicle Notes</label><textarea class="form-textarea" id="f-notes" placeholder="General condition, any issues noticed..."></textarea></div>
+  <div class="form-row"><label class="form-label">Photos (All Sides)</label>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>Front</label>
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>Rear</label>
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>O/S</label>
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>N/S</label>
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>Interior</label>
+      <label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>Dashboard</label>
+    </div>
+  </div>
+  <div class="form-row"><label class="form-label">Dent Repair Required?</label>
+    <select class="form-input" id="f-dent"><option value="no">No — skip to Mechanical</option><option value="yes">Yes — assign to Jay (Dentmaster)</option></select></div>`;
+}
+
+function buildBodyworkForm(v) {
+  return `<div class="form-row"><label class="form-label">Imperfections Found</label><textarea class="form-textarea" id="f-imperfections" placeholder="Describe all bodywork issues, dents, scratches, paint damage..."></textarea></div>
+  <div class="form-row"><label class="form-label">Predicted Repair Cost (£)</label><input type="number" class="form-input" id="f-repair-cost" placeholder="e.g. 450"></div>
+  <div class="form-row"><label class="form-label">Imperfection Photos</label>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      ${[1,2,3,4,5,6].map(n=>`<label style="aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px"></i>Photo ${n}</label>`).join('')}
+    </div>
+  </div>`;
+}
+
+function buildDentForm(v) {
+  return `<div class="form-row"><label class="form-label">Dents Identified</label><textarea class="form-textarea" id="f-dents" placeholder="Describe each dent location and size..."></textarea></div>
+  <div class="form-row"><label class="form-label">PDR Possible?</label><select class="form-input" id="f-pdr"><option>Yes — PDR viable</option><option>No — Conventional repair needed</option><option>Partial — Some PDR, some conventional</option></select></div>
+  <div class="form-row"><label class="form-label">Cost (£)</label><input type="number" class="form-input" id="f-dent-cost" placeholder="e.g. 180"></div>`;
+}
+
+function buildMechanicalForm(v) {
+  let html = `<div class="form-row"><label class="form-label">Parts Required</label><textarea class="form-textarea" id="f-parts" placeholder="List any parts needed..."></textarea></div>
+  <div class="form-row"><label class="form-label">MOT Advisory Items</label><textarea class="form-textarea" id="f-mot-advisory" placeholder="List any MOT advisories..."></textarea></div>`;
+  
+  html += Object.entries(AA_INSPECTION_CHECKLIST).map(([section, items]) => `
+    <div class="checklist-section">
+      <div class="checklist-section-title">${section}</div>
+      ${items.map(item => `
+        <div class="checklist-item">
+          <span class="ci-label">${item}</span>
+          <div class="ci-btns">
+            <button class="ci-btn green" onclick="setCiState(this,'green')">✓</button>
+            <button class="ci-btn amber" onclick="setCiState(this,'amber')">⚠</button>
+            <button class="ci-btn red" onclick="setCiState(this,'red')">✗</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+  return html;
+}
+
+function buildExternalWorkForm(v) {
+  return `<div class="form-row"><label class="form-label">External Supplier</label><input type="text" class="form-input" id="f-supplier" placeholder="e.g. BPS Motors, Main Dealer BMW..."></div>
+  <div class="form-row"><label class="form-label">Reason for External Work</label><textarea class="form-textarea" id="f-ext-reason" placeholder="Describe work required..."></textarea></div>
+  <div class="form-row"><label class="form-label">Predicted Return Date</label><input type="date" class="form-input" id="f-return-pred"></div>
+  <div class="form-row"><label class="form-label">Confirmed Return Date</label><input type="date" class="form-input" id="f-return-conf"></div>
+  <div style="padding:10px;background:#fff3cd;border-radius:8px;font-size:12px;color:#856404;margin-bottom:14px"><i class="fas fa-info-circle"></i> <strong>Note:</strong> All external work movements require Keith Hardy authorisation. A notification will be sent on submission.</div>`;
+}
+
+function buildValetingForm(v) {
+  return `<div class="form-row"><label class="form-label">Before Photos (6)</label>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      ${[1,2,3,4,5,6].map(n=>`<label style="aspect-ratio:4/3;border:2px dashed #f59e0b;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px;color:#f59e0b"></i>Before ${n}</label>`).join('')}
+    </div>
+  </div>
+  <div class="form-row"><label class="form-label">After Photos (6)</label>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      ${[1,2,3,4,5,6].map(n=>`<label style="aspect-ratio:4/3;border:2px dashed #10b981;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink3);text-align:center;flex-direction:column;gap:4px"><i class="fas fa-camera" style="font-size:16px;color:#10b981"></i>After ${n}</label>`).join('')}
+    </div>
+  </div>
+  <div class="form-row"><label class="form-label">All valeting complete?</label>
+    <select class="form-input" id="f-valet-done"><option value="yes">Yes — ready to handover to Advertising</option><option value="no">No — needs more work</option></select></div>`;
+}
+
+function buildAdvertisingForm(v) {
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    ${[['turntable','Turntable Video ✓'],['walkaround','Walk-around Video ✓'],['images','Images ✓'],['touchups','Touch-ups ✓']].map(([id,label])=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+        <input type="checkbox" id="f-${id}" style="width:16px;height:16px;accent-color:var(--red)">
+        <span style="font-size:12px;font-weight:600">${label}</span>
+      </label>`).join('')}
+  </div>
+  <div class="form-row"><label class="form-label">Ismael — Confirm Live Online?</label>
+    <select class="form-input" id="f-live"><option value="">Pending Ismael confirmation</option><option value="yes">✓ Confirmed Live Online</option></select></div>`;
+}
+
+function buildLegalDocsForm(v) {
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+    ${[['v5','V5 Logbook'],['service-history','Service History'],['spare-key','Spare Key'],['mot','MOT Certificate'],['hpi','HPI Clear'],['advertised','Advertised']].map(([id,label])=>`
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+        <input type="checkbox" id="f-${id}" style="width:16px;height:16px;accent-color:var(--green)">
+        <span style="font-size:13px;font-weight:500">${label}</span>
+      </label>`).join('')}
+  </div>`;
+}
+
+function buildTestDriveForm(v) {
+  return `<div class="form-row"><label class="form-label">Customer Name</label><input type="text" class="form-input" id="f-customer-name" placeholder="Full name"></div>
+  <div class="form-row"><label class="form-label">Driving Licence Number</label><input type="text" class="form-input" id="f-licence-num" placeholder="e.g. SMITH801212AB9IJ"></div>
+  <div class="form-row"><label class="form-label">Licence Expiry Date</label><input type="date" class="form-input" id="f-licence-expiry"></div>
+  <div class="form-row"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-td-notes" placeholder="Any observations from test drive..."></textarea></div>`;
+}
+
+function setCiState(btn, state) {
+  const parent = btn.closest('.ci-btns');
+  parent.querySelectorAll('.ci-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function moveVehicle(reg, direction) {
+  const v = vehicles.find(x=>x.registration===reg);
+  if (!v) return;
+  const idx = AC_WORKFLOW_STAGES.findIndex(s=>s.name===v.workflowStage);
+  let nextStage;
+  if (direction === 'next') {
+    nextStage = AC_WORKFLOW_STAGES[idx+1];
+  }
+  if (!nextStage) { showToast('Already at final stage','warning'); return; }
+  v.workflowStage = nextStage.name;
+  v.stageStarted = new Date().toLocaleDateString('en-GB');
+  logWorkflowEvent(reg, 'STAGE_MOVE', `Moved to ${nextStage.name}`, getCurrentUser());
+  showToast(`${reg} moved to ${nextStage.name}`,'success');
+  closeModal('stage-modal');
+  renderBoard();
+}
+
+function completeStage(reg, stageName) {
+  moveVehicle(reg, 'next');
+}
+
+function toggleUrgent(reg) {
+  const v = vehicles.find(x=>x.registration===reg);
+  if (!v) return;
+  v.urgent = !v.urgent;
+  logWorkflowEvent(reg, 'URGENT_TOGGLE', `Urgent: ${v.urgent}`, getCurrentUser());
+  showToast(`${reg} ${v.urgent?'marked URGENT':'urgent removed'}`,'warning');
+  closeModal('stage-modal');
+  renderBoard();
+}
+
+function openMoveModal(reg) {
+  closeModal('stage-modal');
+  const v = reg ? vehicles.find(x=>x.registration===reg) : null;
+  document.getElementById('modal-title').textContent = 'Move Vehicle to Stage';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row"><label class="form-label">Registration</label>
+      <select class="form-input" id="m-reg">
+        ${vehicles.filter(x=>x.status!=='Sold').map(x=>`<option value="${x.registration}" ${v&&x.registration===v.registration?'selected':''}>${x.registration} — ${x.make} ${x.model}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Move To Stage</label>
+      <select class="form-input" id="m-stage">
+        ${AC_WORKFLOW_STAGES.map(s=>`<option value="${s.name}">${s.name}${s.optional?' (Optional)':''}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Reason / Notes</label><textarea class="form-textarea" id="m-reason" placeholder="Why are you moving this vehicle?"></textarea></div>
+    <div class="modal-footer" style="padding:0;border:none;margin-top:14px">
+      <button class="tb-btn btn-ghost" onclick="closeModal('move-modal')">Cancel</button>
+      <button class="tb-btn btn-red" onclick="doMove()"><i class="fas fa-arrow-right"></i> Move Now</button>
+    </div>`;
+  document.getElementById('move-modal').classList.add('open');
+}
+
+function openSendBackModal(reg) {
+  closeModal('stage-modal');
+  document.getElementById('modal-title').textContent = `Send Back — ${reg}`;
+  const v = vehicles.find(x=>x.registration===reg);
+  const idx = AC_WORKFLOW_STAGES.findIndex(s=>s.name===v.workflowStage);
+  const previous = AC_WORKFLOW_STAGES.slice(0, idx);
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row"><label class="form-label">Send Back To</label>
+      <select class="form-input" id="sb-stage">
+        ${previous.map(s=>`<option value="${s.name}">${s.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Reason (Required)</label><textarea class="form-textarea" id="sb-reason" placeholder="Mandatory — state why vehicle is being sent back..."></textarea></div>
+    <div class="modal-footer" style="padding:0;border:none;margin-top:14px">
+      <button class="tb-btn btn-ghost" onclick="closeModal('move-modal')">Cancel</button>
+      <button class="tb-btn btn-red" onclick="doSendBack('${reg}')"><i class="fas fa-undo"></i> Send Back</button>
+    </div>`;
+  document.getElementById('move-modal').classList.add('open');
+}
+
+function openSkipModal(reg) {
+  closeModal('stage-modal');
+  document.getElementById('modal-title').textContent = `Skip Stage — ${reg}`;
+  const v = vehicles.find(x=>x.registration===reg);
+  const idx = AC_WORKFLOW_STAGES.findIndex(s=>s.name===v.workflowStage);
+  const future = AC_WORKFLOW_STAGES.slice(idx+2);
+  document.getElementById('modal-body').innerHTML = `
+    <div style="padding:10px;background:#fff3cd;border-radius:8px;font-size:12px;color:#856404;margin-bottom:14px"><i class="fas fa-exclamation-triangle"></i> Skipping a stage requires sign-off and will be logged in the audit trail.</div>
+    <div class="form-row"><label class="form-label">Skip To</label>
+      <select class="form-input" id="sk-stage">
+        ${future.map(s=>`<option value="${s.name}">${s.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Sign-off Reason (Required)</label><textarea class="form-textarea" id="sk-reason" placeholder="Mandatory reason for skipping stage..."></textarea></div>
+    <div class="modal-footer" style="padding:0;border:none;margin-top:14px">
+      <button class="tb-btn btn-ghost" onclick="closeModal('move-modal')">Cancel</button>
+      <button class="tb-btn btn-amber" onclick="doSkip('${reg}')"><i class="fas fa-forward"></i> Skip Stage</button>
+    </div>`;
+  document.getElementById('move-modal').classList.add('open');
+}
+
+function doMove() {
+  const reg = document.getElementById('m-reg').value;
+  const stage = document.getElementById('m-stage').value;
+  const reason = document.getElementById('m-reason').value;
+  const v = vehicles.find(x=>x.registration===reg);
+  if (!v) return;
+  v.workflowStage = stage;
+  v.stageStarted = new Date().toLocaleDateString('en-GB');
+  logWorkflowEvent(reg, 'MANUAL_MOVE', `Moved to ${stage}. Reason: ${reason}`, getCurrentUser());
+  showToast(`${reg} moved to ${stage}`,'success');
+  closeModal('move-modal');
+  renderBoard();
+}
+
+function doSendBack(reg) {
+  const stage = document.getElementById('sb-stage').value;
+  const reason = document.getElementById('sb-reason').value;
+  if (!reason.trim()) { showToast('Reason is required to send back','error'); return; }
+  const v = vehicles.find(x=>x.registration===reg);
+  v.workflowStage = stage;
+  v.stageStarted = new Date().toLocaleDateString('en-GB');
+  logWorkflowEvent(reg, 'SEND_BACK', `Sent back to ${stage}. Reason: ${reason}`, getCurrentUser());
+  showToast(`${reg} sent back to ${stage}`,'warning');
+  closeModal('move-modal');
+  renderBoard();
+}
+
+function doSkip(reg) {
+  const stage = document.getElementById('sk-stage').value;
+  const reason = document.getElementById('sk-reason').value;
+  if (!reason.trim()) { showToast('Sign-off reason is required','error'); return; }
+  const v = vehicles.find(x=>x.registration===reg);
+  v.workflowStage = stage;
+  v.stageStarted = new Date().toLocaleDateString('en-GB');
+  logWorkflowEvent(reg, 'STAGE_SKIP', `Skipped to ${stage}. Reason: ${reason}`, getCurrentUser());
+  showToast(`${reg} skipped to ${stage} — logged in audit`,'warning');
+  closeModal('move-modal');
+  renderBoard();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.getElementById('nav-user').textContent = getCurrentUser().name;
+renderBoard();
+</script>
+</body></html>
