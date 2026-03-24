@@ -6,6 +6,10 @@
 <title>Audit Trail | Auto Capital</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="./firebase-config.js"></script>
 <script src="./ac-data.js"></script>
 <style>
@@ -456,5 +460,6 @@ function doLogout(){window.location.href='./login.html';}
 <script>
 (function(){try{var cd=localStorage.getItem('ac_import_clickdealer_ts');var et=localStorage.getItem('ac_import_etrack_ts');var ts=[cd,et].filter(Boolean).map(Number).sort(function(a,b){return b-a;})[0];var badge=document.getElementById('lastImportBadge');var span=document.getElementById('lastImportTime');if(!ts||!badge||!span)return;var age=(Date.now()-ts)/3600000;var d=new Date(ts);var label=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});span.textContent=label;badge.className='last-import '+(age<24?'fresh':age>48?'stale':'');}catch(e){}})();
 </script>
+<script src="firebase-init.js"></script>
 </body>
 </html>
